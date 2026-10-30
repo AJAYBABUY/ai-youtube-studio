@@ -9,7 +9,7 @@ from app.models.video_job import VideoJob
 from app.services.production_pipeline import production_pipeline
 from app.utils.logger import logger
 
-scheduler = BackgroundScheduler()
+scheduler = BackgroundScheduler(daemon=True)
 
 def check_scheduled_channel_workflows():
     """

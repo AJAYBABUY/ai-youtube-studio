@@ -12,7 +12,8 @@ import { AIIntegrations } from './pages/AIIntegrations';
 import { UsageCosts } from './pages/UsageCosts';
 import { Settings } from './pages/Settings';
 import { VideoModal } from './components/VideoPlayer/VideoModal';
-import { api } from './services/api';
+import { ConnectionModal } from './components/Common/ConnectionModal';
+import { api, getMediaAssetUrl } from './services/api';
 import {
   Channel,
   VideoJob,
@@ -40,6 +41,10 @@ export const App: React.FC = () => {
 
   // Video preview modal
   const [activeVideoModal, setActiveVideoModal] = useState<any | null>(null);
+
+  // Connection & Auth states
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(true);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Initial load & URL params check
   useEffect(() => {
@@ -129,8 +134,21 @@ export const App: React.FC = () => {
     try {
       const data = await api.getProvidersStatus();
       setSystemHealth(data);
-    } catch (e) {
+      setBackendOnline(true);
+    } catch (e: any) {
       console.error(e);
+      // Fallback health check to distinguish offline from auth error
+      try {
+        await api.checkHealth();
+        setBackendOnline(true);
+        if (String(e).includes('401') || String(e).includes('Studio Access Key required')) {
+          if (!localStorage.getItem('studio_access_key')) {
+            setIsAuthModalOpen(true);
+          }
+        }
+      } catch {
+        setBackendOnline(false);
+      }
     }
   };
 
@@ -264,7 +282,27 @@ export const App: React.FC = () => {
           isEmergencyPaused={Boolean(automationStatus?.global_emergency_pause)}
           onToggleEmergencyPause={handleToggleEmergencyPause}
           ffmpegAvailable={Boolean(systemHealth?.ffmpeg_available)}
+          backendOnline={backendOnline}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
         />
+
+        {/* Backend Offline Warning Banner */}
+        {backendOnline === false && (
+          <div className="bg-rose-950/80 border-b border-rose-800/80 px-6 py-2.5 flex items-center justify-between text-xs text-rose-200">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+              <span>
+                <strong>Backend Offline:</strong> Unable to connect to your local Windows studio engine. Make sure <code className="bg-rose-900/50 px-1 py-0.5 rounded text-rose-100">Start-All.bat</code> is running on your laptop.
+              </span>
+            </div>
+            <button
+              onClick={() => setIsAuthModalOpen(true)}
+              className="underline hover:text-white font-medium"
+            >
+              Configure Connection
+            </button>
+          </div>
+        )}
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {currentTab === 'dashboard' && (
@@ -326,7 +364,7 @@ export const App: React.FC = () => {
               onRefresh={loadLibrary}
               onSelectVideo={(v) =>
                 setActiveVideoModal({
-                  url: v.stream_url,
+                  url: getMediaAssetUrl(v.stream_url),
                   title: v.title,
                   type: v.video_type,
                   youtubeUrl: v.youtube_url,
@@ -376,6 +414,16 @@ export const App: React.FC = () => {
           youtubeUrl={activeVideoModal.youtubeUrl}
         />
       )}
+
+      {/* Connection & Auth Modal */}
+      <ConnectionModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setBackendOnline(true);
+          loadAllData();
+        }}
+      />
     </div>
   );
 };

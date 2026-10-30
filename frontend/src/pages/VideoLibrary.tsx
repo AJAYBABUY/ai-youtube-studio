@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Channel, VideoJob } from '../types';
 import { StatusBadge } from '../components/Common/StatusBadge';
+import { getMediaAssetUrl } from '../services/api';
 
 interface Props {
   channels: Channel[];
@@ -112,13 +113,12 @@ export const VideoLibrary: React.FC<Props> = ({
                 {/* Thumbnail Image Container */}
                 <div
                   onClick={() => onSelectVideo(video)}
-                  className={`relative cursor-pointer overflow-hidden bg-black ${
-                    video.video_type === 'shorts' ? 'aspect-[9/12]' : 'aspect-video'
-                  }`}
+                  className={`relative cursor-pointer overflow-hidden bg-black ${video.video_type === 'shorts' ? 'aspect-[9/12]' : 'aspect-video'
+                    }`}
                 >
                   {video.thumbnail_url ? (
                     <img
-                      src={video.thumbnail_url}
+                      src={getMediaAssetUrl(video.thumbnail_url)}
                       alt={video.title}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
@@ -182,7 +182,7 @@ export const VideoLibrary: React.FC<Props> = ({
                 <div className="flex items-center gap-2">
                   {video.stream_url && (
                     <a
-                      href={video.stream_url}
+                      href={getMediaAssetUrl(video.stream_url)}
                       download
                       className="rounded-lg p-1.5 text-slate-400 hover:bg-studio-800 hover:text-white transition-colors"
                       title="Download MP4"

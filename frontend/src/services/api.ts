@@ -8,15 +8,50 @@ import {
   CalendarEvent,
 } from '../types';
 
-const BASE_URL = '/api';
+export const getApiBaseUrl = (): string => {
+  const customUrl = localStorage.getItem('studio_backend_url');
+  if (customUrl && customUrl.trim()) {
+    return customUrl.trim().replace(/\/+$/, '') + '/api';
+  }
+  const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
+  return envBase ? envBase.replace(/\/+$/, '') + '/api' : '/api';
+};
+
+export const getBackendRootUrl = (): string => {
+  const customUrl = localStorage.getItem('studio_backend_url');
+  if (customUrl && customUrl.trim()) {
+    return customUrl.trim().replace(/\/+$/, '');
+  }
+  const envBase = (import.meta.env.VITE_API_BASE_URL as string) || '';
+  return envBase ? envBase.replace(/\/+$/, '') : '';
+};
+
+export const getMediaAssetUrl = (pathOrUrl?: string | null): string => {
+  if (!pathOrUrl) return '';
+  const studioKey = localStorage.getItem('studio_access_key') || '';
+  const separator = pathOrUrl.includes('?') ? '&' : '?';
+  const urlWithKey = studioKey ? `${pathOrUrl}${separator}studio_key=${encodeURIComponent(studioKey)}` : pathOrUrl;
+
+  if (urlWithKey.startsWith('http://') || urlWithKey.startsWith('https://')) {
+    return urlWithKey;
+  }
+  const root = getBackendRootUrl();
+  return root ? `${root}${urlWithKey}` : urlWithKey;
+};
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+  const baseUrl = getApiBaseUrl();
+  const studioKey = localStorage.getItem('studio_access_key') || '';
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(studioKey ? { 'X-Studio-Key': studioKey } : {}),
+    ...(options.headers as Record<string, string>),
+  };
+
+  const res = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
+    headers,
   });
 
   if (!res.ok) {
@@ -34,6 +69,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const api = {
+  // Health & Verification
+  checkHealth: () => request<{ status: string; app: string; environment: string; emergency_paused: boolean }>('/health'),
+  verifyAccessKey: (key: string) =>
+    request<{ valid: boolean }>('/auth/verify-key', { method: 'POST', body: JSON.stringify({ key }) }),
+
   // Channels
   getChannels: () => request<Channel[]>('/channels'),
   getChannel: (id: string) => request<Channel>(`/channels/${id}`),
@@ -98,4 +138,3 @@ export const api = {
   updateSettings: (data: any) =>
     request<any>('/settings', { method: 'POST', body: JSON.stringify(data) }),
 };
-

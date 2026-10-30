@@ -13,15 +13,15 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 def get_or_create_access_key() -> str:
     """Returns the persistent studio access key, creating one if not present."""
-    if settings.STUDIO_ACCESS_KEY and settings.STUDIO_ACCESS_KEY.strip():
-        return settings.STUDIO_ACCESS_KEY.strip()
-
     if KEY_FILE.exists():
         with open(KEY_FILE, "r", encoding="utf-8") as f:
             saved_key = f.read().strip()
             if saved_key:
                 settings.STUDIO_ACCESS_KEY = saved_key
                 return saved_key
+
+    if settings.STUDIO_ACCESS_KEY and settings.STUDIO_ACCESS_KEY.strip():
+        return settings.STUDIO_ACCESS_KEY.strip()
 
     # Generate a new 32-character secure hex token
     new_key = secrets.token_hex(16)

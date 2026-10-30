@@ -24,12 +24,35 @@ def find_ffmpeg_binary() -> str:
         return _CACHED_FFMPEG
 
     # 3. Check known WinGet installation path on Windows
-    winget_base = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Packages"
-    if winget_base.exists():
-        found = list(winget_base.glob("**/ffmpeg.exe"))
-        if found:
-            _CACHED_FFMPEG = str(found[0])
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    if local_app_data:
+        known_ffmpeg = (
+            Path(local_app_data)
+            / "Microsoft"
+            / "WinGet"
+            / "Packages"
+            / "Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe"
+            / "ffmpeg-9.0.1-essentials_build"
+            / "bin"
+            / "ffmpeg.exe"
+        )
+        if known_ffmpeg.exists():
+            _CACHED_FFMPEG = str(known_ffmpeg)
             return _CACHED_FFMPEG
+
+        winget_base = Path(local_app_data) / "Microsoft" / "WinGet" / "Packages"
+        if winget_base.exists():
+            for p in winget_base.iterdir():
+                if "ffmpeg" in p.name.lower():
+                    exe = p / "bin" / "ffmpeg.exe"
+                    if exe.exists():
+                        _CACHED_FFMPEG = str(exe)
+                        return _CACHED_FFMPEG
+                    for sub in p.iterdir():
+                        exe_sub = sub / "bin" / "ffmpeg.exe"
+                        if exe_sub.exists():
+                            _CACHED_FFMPEG = str(exe_sub)
+                            return _CACHED_FFMPEG
 
     return "ffmpeg"
 
@@ -47,12 +70,35 @@ def find_ffprobe_binary() -> str:
         _CACHED_FFPROBE = system_ffprobe
         return _CACHED_FFPROBE
 
-    winget_base = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "WinGet" / "Packages"
-    if winget_base.exists():
-        found = list(winget_base.glob("**/ffprobe.exe"))
-        if found:
-            _CACHED_FFPROBE = str(found[0])
+    local_app_data = os.environ.get("LOCALAPPDATA", "")
+    if local_app_data:
+        known_ffprobe = (
+            Path(local_app_data)
+            / "Microsoft"
+            / "WinGet"
+            / "Packages"
+            / "Gyan.FFmpeg.Essentials_Microsoft.Winget.Source_8wekyb3d8bbwe"
+            / "ffmpeg-9.0.1-essentials_build"
+            / "bin"
+            / "ffprobe.exe"
+        )
+        if known_ffprobe.exists():
+            _CACHED_FFPROBE = str(known_ffprobe)
             return _CACHED_FFPROBE
+
+        winget_base = Path(local_app_data) / "Microsoft" / "WinGet" / "Packages"
+        if winget_base.exists():
+            for p in winget_base.iterdir():
+                if "ffmpeg" in p.name.lower():
+                    exe = p / "bin" / "ffprobe.exe"
+                    if exe.exists():
+                        _CACHED_FFPROBE = str(exe)
+                        return _CACHED_FFPROBE
+                    for sub in p.iterdir():
+                        exe_sub = sub / "bin" / "ffprobe.exe"
+                        if exe_sub.exists():
+                            _CACHED_FFPROBE = str(exe_sub)
+                            return _CACHED_FFPROBE
 
     return "ffprobe"
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, AlertTriangle, Play, Pause, Activity } from 'lucide-react';
+import { ShieldAlert, AlertTriangle, Play, Pause, Activity, Wifi, WifiOff, Key } from 'lucide-react';
 import { Channel } from '../../types';
 
 interface HeaderProps {
@@ -10,6 +10,8 @@ interface HeaderProps {
   isEmergencyPaused: boolean;
   onToggleEmergencyPause: () => void;
   ffmpegAvailable: boolean;
+  backendOnline?: boolean | null;
+  onOpenAuthModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -20,6 +22,8 @@ export const Header: React.FC<HeaderProps> = ({
   isEmergencyPaused,
   onToggleEmergencyPause,
   ffmpegAvailable,
+  backendOnline = true,
+  onOpenAuthModal,
 }) => {
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-800/80 bg-studio-950/80 px-6 backdrop-blur-md">
@@ -29,7 +33,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         {/* Channel quick filter */}
         <div className="flex items-center gap-2">
           <span className="hidden text-xs text-slate-400 sm:inline">Active Channel:</span>
@@ -47,10 +51,31 @@ export const Header: React.FC<HeaderProps> = ({
           </select>
         </div>
 
+        {/* Backend Online / Offline Status */}
+        <button
+          onClick={onOpenAuthModal}
+          title="Click to configure Backend URL or Access Key"
+          className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
+            backendOnline
+              ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+              : 'border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 animate-pulse'
+          }`}
+        >
+          {backendOnline ? (
+            <Wifi className="h-3 w-3 text-emerald-400" />
+          ) : (
+            <WifiOff className="h-3 w-3 text-rose-400" />
+          )}
+          <span className="font-medium hidden sm:inline">
+            {backendOnline ? 'Backend Online' : 'Backend Offline'}
+          </span>
+          <Key className="h-3 w-3 ml-0.5 opacity-70" />
+        </button>
+
         {/* FFmpeg Indicator */}
         <div
           title={ffmpegAvailable ? 'FFmpeg Video Assembly Ready' : 'FFmpeg not detected'}
-          className="hidden md:flex items-center gap-1.5 rounded-full border border-slate-800 bg-studio-900/60 px-2.5 py-1 text-xs text-slate-300"
+          className="hidden lg:flex items-center gap-1.5 rounded-full border border-slate-800 bg-studio-900/60 px-2.5 py-1 text-xs text-slate-300"
         >
           <Activity className={`h-3 w-3 ${ffmpegAvailable ? 'text-emerald-400' : 'text-rose-400'}`} />
           <span>FFmpeg: {ffmpegAvailable ? 'Ready' : 'Missing'}</span>

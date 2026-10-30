@@ -1,11 +1,12 @@
 import os
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from app.config import settings, BASE_DIR
 from app.utils.ffmpeg_checker import verify_ffmpeg
+from app.utils.security import verify_studio_access
 
-router = APIRouter(prefix="/settings", tags=["Settings"])
+router = APIRouter(prefix="/settings", tags=["Settings"], dependencies=[Depends(verify_studio_access)])
 
 class SettingsUpdate(BaseModel):
     gemini_api_key: Optional[str] = None
@@ -23,13 +24,15 @@ def get_system_settings():
         "host": settings.HOST,
         "port": settings.PORT,
         "frontend_port": settings.FRONTEND_PORT,
+        "frontend_public_url": settings.FRONTEND_PUBLIC_URL,
+        "backend_public_url": settings.BACKEND_PUBLIC_URL,
         "has_gemini_key": bool(settings.GEMINI_API_KEY),
         "has_google_oauth": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
         "prefer_free_tiers": settings.PREFER_FREE_TIERS,
         "daily_spend_limit_usd": settings.DAILY_SPEND_LIMIT_USD,
         "monthly_spend_limit_usd": settings.MONTHLY_SPEND_LIMIT_USD,
-        "media_data_dir": str(settings.MEDIA_DATA_DIR),
-        "database_url": settings.DATABASE_URL,
+        "media_data_dir": "data/channels", # Sanitized relative path
+        "database_url": "sqlite:///data/ai_youtube_studio.db", # Sanitized relative path
         "ffmpeg": ffmpeg_info
     }
 
@@ -78,4 +81,3 @@ def update_system_settings(data: SettingsUpdate):
         f.writelines(new_lines)
 
     return {"message": "Settings updated and saved to .env"}
-

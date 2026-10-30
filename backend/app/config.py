@@ -14,13 +14,17 @@ class Settings(BaseSettings):
     PORT: int = 8000
     FRONTEND_PORT: int = 5173
 
-    # Security
+    # Security & Access Keys
     ENCRYPTION_KEY: Optional[str] = None
     STUDIO_ACCESS_KEY: Optional[str] = None
 
-    # Public URLs & CORS
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8000,http://127.0.0.1:8000"
-    FRONTEND_PUBLIC_URL: Optional[str] = None
+    # CORS & Public Endpoints
+    CORS_ORIGINS: str = (
+        "https://ai-youtube-studio-ajay.netlify.app,"
+        "http://localhost:5173,http://127.0.0.1:5173,"
+        "http://localhost:8000,http://127.0.0.1:8000"
+    )
+    FRONTEND_PUBLIC_URL: str = "https://ai-youtube-studio-ajay.netlify.app"
     BACKEND_PUBLIC_URL: Optional[str] = None
 
     # Google OAuth & YouTube API
@@ -59,4 +63,3 @@ settings = Settings()
 # Ensure base data folders exist
 os.makedirs(BASE_DIR / "data", exist_ok=True)
 os.makedirs(settings.MEDIA_DATA_DIR, exist_ok=True)
-
