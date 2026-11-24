@@ -110,21 +110,37 @@ export const ConnectionModal: React.FC<Props> = ({ isOpen, onClose, onSuccess })
           </div>
 
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-200 mb-1.5">
-              <Globe className="h-3.5 w-3.5 text-blue-400" />
-              Backend Tunnel URL (Leave blank for default / localhost)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-slate-200">
+                <Globe className="h-3.5 w-3.5 text-blue-400" />
+                Backend Tunnel URL (or Localhost)
+              </label>
+              <button
+                type="button"
+                onClick={() => setBackendUrl('http://127.0.0.1:8000')}
+                className="text-[10px] text-blue-400 hover:text-blue-300 underline font-mono"
+              >
+                Set to Localhost
+              </button>
+            </div>
             <input
               type="url"
-              placeholder="https://your-cloudflared-domain.trycloudflare.com"
+              placeholder="https://your-tunnel.trycloudflare.com or http://127.0.0.1:8000"
               value={backendUrl}
               onChange={(e) => setBackendUrl(e.target.value)}
               className="w-full rounded-xl bg-studio-950 border border-slate-800 px-3.5 py-2.5 text-xs font-mono text-white placeholder-slate-600 focus:border-red-500 focus:outline-none"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Current active API endpoint: <code className="text-slate-300">{getApiBaseUrl()}</code>
+              Active endpoint: <code className="text-slate-300">{getApiBaseUrl()}</code>
             </p>
           </div>
+        </div>
+
+        <div className="rounded-xl bg-studio-950/80 border border-slate-800/80 p-3 text-[11px] text-slate-400 space-y-1">
+          <p className="font-semibold text-slate-300">Quick Setup Instructions:</p>
+          <p>• <strong>Start Engine:</strong> Run <code className="text-slate-200">Start-All.bat</code> on your Windows laptop.</p>
+          <p>• <strong>Tunnel Link:</strong> Copy the <code className="text-slate-200">trycloudflare.com</code> URL printed in your console or in <code className="text-slate-200">data\logs\tunnel.log</code>.</p>
+          <p>• <strong>Access Key:</strong> Copy the 32-character key from file <code className="text-slate-200">data\.access_key</code>.</p>
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">

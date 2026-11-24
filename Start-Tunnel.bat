@@ -74,19 +74,38 @@ echo Running Cloudflare Quick Tunnel for port 8000...
 start "Cloudflare Tunnel - Quick Tunnel" /min "%CLOUDFLARED_BIN%" tunnel --url http://127.0.0.1:8000 >> data\logs\tunnel.log 2>&1
 
 :launched
-timeout /t 4 /nobreak >nul
+echo Waiting for Cloudflare Tunnel to assign public URL...
+set "TUNNEL_URL="
+for /l %%i in (1,1,8) do (
+    if "!TUNNEL_URL!"=="" (
+        timeout /t 1 /nobreak >nul
+        for /f "tokens=*" %%u in ('powershell -Command "if (Test-Path 'data\logs\tunnel.log') { (Get-Content 'data\logs\tunnel.log' | Select-String -Pattern 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' | ForEach-Object { \$_.Matches[0].Value } | Select-Object -Last 1) }"') do (
+            set "TUNNEL_URL=%%u"
+        )
+    )
+)
 
 :show_summary
 echo.
 echo ==============================================================
 echo    CLOUDFLARE TUNNEL IS RUNNING!
 echo.
-echo    Target Frontend: https://ai-youtube-studio-ajay.netlify.app
-echo    Local Backend:   http://127.0.0.1:8000
-echo    Tunnel Log:      data\logs\tunnel.log
-echo.
-echo    To inspect active public URLs:
-echo      findstr /i "trycloudflare.com" data\logs\tunnel.log
+if not "!TUNNEL_URL!"=="" (
+    echo    Active Public Tunnel: !TUNNEL_URL!
+    echo.
+    echo    DIRECT AUTO-CONNECT URL:
+    echo    https://ai-youtube-studio-ajay.netlify.app/?tunnel=!TUNNEL_URL!
+    echo.
+    echo    Opening Live Studio in browser...
+    start "" "https://ai-youtube-studio-ajay.netlify.app/?tunnel=!TUNNEL_URL!"
+) else (
+    echo    Target Frontend: https://ai-youtube-studio-ajay.netlify.app
+    echo    Local Backend:   http://127.0.0.1:8000
+    echo    Tunnel Log:      data\logs\tunnel.log
+    echo.
+    echo    Inspect active URL with:
+    echo      findstr /i "trycloudflare.com" data\logs\tunnel.log
+)
 echo.
 echo    To stop the tunnel, run Stop-Studio.bat.
 echo ==============================================================

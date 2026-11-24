@@ -48,18 +48,56 @@ export const App: React.FC = () => {
 
   // Initial load & URL params check
   useEffect(() => {
-    loadAllData();
-
-    // Check OAuth return query params
     const params = new URLSearchParams(window.location.search);
+    let stateChanged = false;
+
+    // 1. Auto-configure Backend Tunnel URL from URL params (?backend=... or ?tunnel=...)
+    const tunnelParam = params.get('backend') || params.get('tunnel') || params.get('api');
+    if (tunnelParam && tunnelParam.trim()) {
+      localStorage.setItem('studio_backend_url', tunnelParam.trim().replace(/\/+$/, ''));
+      params.delete('backend');
+      params.delete('tunnel');
+      params.delete('api');
+      stateChanged = true;
+    }
+
+    // 2. Auto-configure Access Key from URL param if passed (?key=...)
+    const keyParam = params.get('key');
+    if (keyParam && keyParam.trim()) {
+      localStorage.setItem('studio_access_key', keyParam.trim());
+      params.delete('key');
+      stateChanged = true;
+    }
+
+    // 3. Check OAuth return query params
     if (params.get('auth') === 'success') {
       alert('🎉 Google OAuth connection successful! Your YouTube channel is now connected.');
-      window.history.replaceState({}, '', window.location.pathname);
+      params.delete('auth');
+      stateChanged = true;
       setCurrentTab('channels');
     } else if (params.get('auth') === 'error') {
       alert('OAuth Error: ' + (params.get('message') || 'Failed to authenticate channel.'));
-      window.history.replaceState({}, '', window.location.pathname);
+      params.delete('auth');
+      params.delete('message');
+      stateChanged = true;
     }
+
+    if (stateChanged) {
+      const newQuery = params.toString();
+      window.history.replaceState({}, '', window.location.pathname + (newQuery ? `?${newQuery}` : ''));
+    }
+
+    // 4. Auto-open connection modal if hosted remotely (e.g. Netlify) and no backend URL or key is saved
+    const isRemote =
+      typeof window !== 'undefined' &&
+      !window.location.hostname.includes('localhost') &&
+      !window.location.hostname.includes('127.0.0.1');
+
+    if (isRemote && (!localStorage.getItem('studio_backend_url') || !localStorage.getItem('studio_access_key'))) {
+      setIsAuthModalOpen(true);
+    }
+
+    loadAllData();
   }, []);
 
   // Polling for live production progress updates
@@ -288,18 +326,21 @@ export const App: React.FC = () => {
 
         {/* Backend Offline Warning Banner */}
         {backendOnline === false && (
-          <div className="bg-rose-950/80 border-b border-rose-800/80 px-6 py-2.5 flex items-center justify-between text-xs text-rose-200">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-rose-500 animate-ping" />
+          <div className="bg-gradient-to-r from-rose-950/90 via-slate-900 to-rose-950/90 border-b border-rose-800/80 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs text-rose-200">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+              </span>
               <span>
-                <strong>Backend Offline:</strong> Unable to connect to your local Windows studio engine. Make sure <code className="bg-rose-900/50 px-1 py-0.5 rounded text-rose-100">Start-All.bat</code> is running on your laptop.
+                <strong>Backend Disconnected:</strong> Running from your Windows laptop. Run <code className="bg-rose-900/60 px-1.5 py-0.5 rounded font-mono text-rose-100 font-bold">Start-All.bat</code> on your machine to activate the engine and Cloudflare tunnel.
               </span>
             </div>
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="underline hover:text-white font-medium"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 px-3 py-1 font-semibold text-white shadow-md transition-all text-xs"
             >
-              Configure Connection
+              Connect to Laptop Engine →
             </button>
           </div>
         )}

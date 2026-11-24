@@ -65,6 +65,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     throw new Error(errorDetail);
   }
 
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(
+      'Received non-JSON response from server (HTML fallback). Please configure your Cloudflare Tunnel URL in Connection Settings.'
+    );
+  }
+
   return res.json();
 }
 

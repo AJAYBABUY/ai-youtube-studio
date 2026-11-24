@@ -70,7 +70,12 @@ if %ERRORLEVEL% equ 0 (
 ) else (
     echo         Starting Cloudflare Tunnel in background...
     start "Cloudflare Tunnel" /min cmd /c "Start-Tunnel.bat"
-    timeout /t 3 /nobreak >nul
+    timeout /t 4 /nobreak >nul
+)
+
+set "TUNNEL_URL="
+for /f "tokens=*" %%u in ('powershell -Command "if (Test-Path 'data\logs\tunnel.log') { (Get-Content 'data\logs\tunnel.log' | Select-String -Pattern 'https://[a-zA-Z0-9-]+\.trycloudflare\.com' | ForEach-Object { \$_.Matches[0].Value } | Select-Object -Last 1) }"') do (
+    set "TUNNEL_URL=%%u"
 )
 
 echo.
@@ -79,6 +84,13 @@ echo    AI YOUTUBE STUDIO - PRODUCTION SYSTEM STATUS: ONLINE
 echo ==============================================================
 echo.
 echo    LIVE FRONTEND:     https://ai-youtube-studio-ajay.netlify.app
+if not "!TUNNEL_URL!"=="" (
+    echo    ACTIVE TUNNEL:     !TUNNEL_URL!
+    echo.
+    echo    👉 DIRECT CONNECT LINK:
+    echo    https://ai-youtube-studio-ajay.netlify.app/?tunnel=!TUNNEL_URL!
+)
+echo.
 echo    LOCAL DASHBOARD:   http://localhost:5173
 echo    BACKEND API:       http://127.0.0.1:8000
 echo    API HEALTH:        http://127.0.0.1:8000/api/health
