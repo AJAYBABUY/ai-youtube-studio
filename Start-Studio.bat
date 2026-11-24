@@ -19,21 +19,21 @@ if not exist "data\logs" mkdir "data\logs"
 :: Check if port 8000 is already active to prevent duplicate process
 netstat -aon | findstr :8000 | findstr LISTENING >nul
 if %ERRORLEVEL% equ 0 (
-    echo [Backend] Process already listening on port 8000. Skipping launch.
+    echo [Backend] Process already listening on port 8000.
 ) else (
     echo [Backend] Starting FastAPI Backend on http://127.0.0.1:8000...
-    start "AI YouTube Studio Backend" /min cmd /c "set PYTHONPATH=%~dp0backend&& venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir backend >> data\logs\backend.log 2>&1"
+    start "AI YouTube Studio Backend" /min powershell -WindowStyle Hidden -Command "$env:PYTHONPATH='%~dp0backend'; & '%~dp0venv\Scripts\python.exe' -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --app-dir '%~dp0backend'"
     timeout /t 3 /nobreak >nul
 )
 
 :: Check if port 5173 is already active
 netstat -aon | findstr :5173 | findstr LISTENING >nul
 if %ERRORLEVEL% equ 0 (
-    echo [Frontend] Process already listening on port 5173. Skipping launch.
+    echo [Frontend] Process already listening on port 5173.
 ) else (
     echo [Frontend] Starting React/Vite Interface on http://localhost:5173...
-    start "AI YouTube Studio Frontend" /min cmd /c "cd /d "%~dp0frontend" && npm run dev >> ..\data\logs\frontend.log 2>&1"
-    timeout /t 2 /nobreak >nul
+    start "AI YouTube Studio Frontend" /min powershell -WindowStyle Hidden -Command "$env:Path='C:\Program Files\nodejs;' + $env:Path; Set-Location '%~dp0frontend'; & 'C:\Program Files\nodejs\npm.cmd' run dev -- --host"
+    timeout /t 3 /nobreak >nul
 )
 
 echo.
